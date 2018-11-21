@@ -1,43 +1,64 @@
 import { SignallingBase } from 'awrtc-signalling';
 
+interface AwWebsocketMessage {
+    peerId: string;
+    data: AwTransferData;
+}
+
+interface AwTransferData {
+    type: string;
+    eventData?: RTCSessionDescriptionInit | RTCIceCandidate;
+}
+
 export class WebsocketSignalling extends SignallingBase {
     private socket: WebSocket;
 
-    constructor (serverUrl) {
+    constructor (serverUrl: string) {
         super();
-        //this.serverUrl = serverUrl;
-        //this._initializeConnection();
+        this.socket = this.initializeWebsocket(serverUrl);
     }
-    /*_initializeConnection () {
-        this.socket = new WebSocket(this.serverUrl);
-        this.socket.onopen = (event) => this._onSocketOpen(event);
-        this.socket.onmessage = (event) => this._onMessage(event);        
-        this.socket.onerror = (error) => console.log("Socket Error:", error);
-        this.socket.onclose = () => console.log("The Socket is Closed");
-    }*/
-
-    _onSocketOpen () {
-
+    private initializeWebsocket (serverUrl: string): WebSocket {
+        const socket = new WebSocket(serverUrl);
+        this.socket.addEventListener('open', (event: Event) => console.log('socket open', event));
+        this.socket.addEventListener('message', (event: MessageEvent) => this.onMessage(event));
+        this.socket.addEventListener('error', (event: Event) => console.log('Socket Error:', event));
+        this.socket.addEventListener('close', (event: CloseEvent) => console.log('The Socket is Closed', event));
+        return socket;
     }
-
-    _onMessage (event) {
+    private onMessage (event: MessageEvent): void {
         console.log('received message: ', event.data);
-        /*this._onPeerListOffer
-        this._onOfferFromRemotePeer
-        this._onAnswerFromRemotePeer
-        this._onNewCandidateFromRemotePeer*/
+        const transferedData = <AwWebsocketMessage>JSON.parse(event.data);
+        if (transferedData.data.type === 'offer') {
+            this.handle('offer', { peerId: transferedData.peerId, offer: transferedData.data.eventData });
+        } else if (transferedData.data.type === 'answer') {
+            this.handle('answer', { peerId: transferedData.peerId, answer: transferedData.data.eventData });
+        } else if (transferedData.data.type === 'candidate') {
+            this.handle('newCandidate', { peerId: transferedData.peerId, iceCandidate: transferedData.data.eventData });
+        }
     }
 
-    registerPeer (peerName) {
-        this.socket.send(peerName);
+    public registerPeer (peerId: string) {
+        this.sendDataThroughWebsocket('register', peerId);
     }
-    sendOfferToRemotePeer (peerName, RTCSessionDescription) {
-        this.socket.send(peerName);
+    public sendOfferToRemotePeer (peerId: string, offer: RTCSessionDescriptionInit) {
+        this.sendDataThroughWebsocket('offer', peerId, offer);
     }
-    sendAnswerToRemotePeer (peerName, RTCSessionDescription) {
-        this.socket.send(peerName);
+    public sendAnswerToRemotePeer (peerId: string, answer: RTCSessionDescriptionInit) {
+        this.sendDataThroughWebsocket('answer', peerId, answer);
     }
-    sendNewCandidateToRemotePeer (peerName, iceCandidate) {
-        this.socket.send(peerName);
+    public sendNewCandidateToRemotePeer (peerId: string, candidate: RTCIceCandidate) {
+        this.sendDataThroughWebsocket('candidate', peerId, candidate);
+    }
+    private sendDataThroughWebsocket (type: string, peerId: string, eventData?: RTCSessionDescriptionInit | RTCIceCandidate): void {
+        const transferData = this.buildWebsocketMessage(type, peerId, eventData);
+        const transferDataJSON = JSON.stringify(transferData);
+        this.socket.send(transferDataJSON);
+    }
+    private buildWebsocketMessage (type: string, peerId: string, eventData?: RTCSessionDescriptionInit | RTCIceCandidate): AwWebsocketMessage {
+        const transferData = { type, eventData };
+        return { 
+            peerId, 
+            data: transferData 
+        };
     }
 }
