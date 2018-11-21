@@ -1,0 +1,1 @@
+export { AngularfireSignalling } from './signalling/signalling-angularfire';
