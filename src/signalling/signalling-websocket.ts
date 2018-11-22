@@ -1,11 +1,11 @@
 import { SignallingBase } from 'awrtc-signalling';
 
-interface AwWebsocketMessage {
+interface AwSignallingPacket {
     peerId: string;
-    data: AwTransferData;
+    data: AwPeerDataPacket;
 }
 
-interface AwTransferData {
+interface AwPeerDataPacket {
     type: string;
     eventData?: RTCSessionDescriptionInit | RTCIceCandidate;
 }
@@ -27,7 +27,7 @@ export class WebsocketSignalling extends SignallingBase {
     }
     private onMessage (event: MessageEvent): void {
         console.log('received message: ', event.data);
-        const transferedData = <AwWebsocketMessage>JSON.parse(event.data);
+        const transferedData = <AwSignallingPacket>JSON.parse(event.data);
         if (transferedData.data.type === 'offer') {
             this.handle('offer', { peerId: transferedData.peerId, offer: transferedData.data.eventData });
         } else if (transferedData.data.type === 'answer') {
@@ -54,11 +54,11 @@ export class WebsocketSignalling extends SignallingBase {
         const transferDataJSON = JSON.stringify(transferData);
         this.socket.send(transferDataJSON);
     }
-    private buildWebsocketMessage (type: string, peerId: string, eventData?: RTCSessionDescriptionInit | RTCIceCandidate): AwWebsocketMessage {
-        const transferData = { type, eventData };
+    private buildWebsocketMessage (type: string, peerId: string, eventData?: RTCSessionDescriptionInit | RTCIceCandidate): AwSignallingPacket {
+        const buildDataPacket = { type, eventData };
         return { 
             peerId, 
-            data: transferData 
+            data: buildDataPacket 
         };
     }
 }

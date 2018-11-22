@@ -1,1 +1,1 @@
-export { AngularfireSignalling } from './signalling/signalling-angularfire';
+export { WebsocketSignalling } from './signalling/signalling-websocket';
