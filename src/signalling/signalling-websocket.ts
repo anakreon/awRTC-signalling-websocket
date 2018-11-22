@@ -19,10 +19,10 @@ export class WebsocketSignalling extends SignallingBase {
     }
     private initializeWebsocket (serverUrl: string): WebSocket {
         const socket = new WebSocket(serverUrl);
-        this.socket.addEventListener('open', (event: Event) => console.log('socket open', event));
-        this.socket.addEventListener('message', (event: MessageEvent) => this.onMessage(event));
-        this.socket.addEventListener('error', (event: Event) => console.log('Socket Error:', event));
-        this.socket.addEventListener('close', (event: CloseEvent) => console.log('The Socket is Closed', event));
+        socket.addEventListener('open', (event: Event) => console.log('socket open', event));
+        socket.addEventListener('message', (event: MessageEvent) => this.onMessage(event));
+        socket.addEventListener('error', (event: Event) => console.log('Socket Error:', event));
+        socket.addEventListener('close', (event: CloseEvent) => console.log('The Socket is Closed', event));
         return socket;
     }
     private onMessage (event: MessageEvent): void {
